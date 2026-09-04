@@ -71,7 +71,7 @@
 <div class="screen" id="s-people">
   <h2>בני המשפחה</h2>
   <div class="notice" id="existingNote" style="display:none"></div>
-  <p class="muted">לכל אחד: שם ותאריך עברי. אפשר להוסיף גם יארצייט.</p>
+  <p class="muted">לכל אחד: שם ותאריך עברי. אפשר להוסיף גם יום נישואין או יארצייט.</p>
   <div id="cards"></div>
   <button class="btn sec" onclick="addCard()">+ הוסף בן משפחה</button>
   <div class="err" id="peopleErr"></div>
@@ -106,7 +106,7 @@
 
 // ----- מצב -----
 var MONTHS = ['תשרי','חשון','כסליו','טבת','שבט','אדר','אדר א','אדר ב','ניסן','אייר','סיון','תמוז','אב','אלול'];
-var TYPES = ['יום הולדת','יארצייט'];
+var TYPES = ['יום הולדת','יום נישואין','יארצייט'];
 var state = {family:'',parents:'',phone:'',people:[]};
 var DRAFT_KEY = 'luach_draft';
 
@@ -164,7 +164,7 @@ function renderCards(){
   state.people.forEach(function(p,i){
     var d=document.createElement('div'); d.className='card';
     var isBirthday = p.type==='יום הולדת';
-    var nameLabel = p.type==='יארצייט'?'שם הנפטר/ת':'שם פרטי';
+    var nameLabel = p.type==='יום נישואין'?'של מי? (למשל: דוד ורחל)': p.type==='יארצייט'?'שם הנפטר/ת':'שם פרטי';
     d.innerHTML =
       '<span class="num">'+(i+1)+'</span>'+
       '<button class="del" onclick="delCard('+i+')">מחיקה ✕</button>'+
