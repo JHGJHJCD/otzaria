@@ -27,7 +27,7 @@ function setup(){
   ensureSheet_(ss, SHEET_PEOPLE, PEOPLE_HEADERS);
   ensureSheet_(ss, SHEET_FAMILIES, FAMILY_HEADERS);
   ensureSheet_(ss, SHEET_ARCHIVE, PEOPLE_HEADERS);
-  SpreadsheetApp.getUi().alert('מוכן. עכשיו: פרוס > פריסה חדשה > אפליקציית אינטרנט > "כל אחד" ושלח את הקישור למשפחה.');
+  try { SpreadsheetApp.getUi().alert('מוכן.'); } catch(e) {}
 }
 
 function ensureSheet_(ss, name, headers){
