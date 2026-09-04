@@ -184,7 +184,7 @@ function buildCalendarSheet(year){
 
 function eventText_(type, name, hebYear, year){
   var t = String(type||'יום הולדת');
-  var s = (t==='אחר') ? String(name) : t + ' ' + name;
+  var s = t + ' ' + name;
   if (SHOW_AGE && t==='יום הולדת' && hebYear) s += ' (' + (year - Number(hebYear)) + ')';
   return s;
 }
