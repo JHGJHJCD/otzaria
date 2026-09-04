@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>הלוח המשפחתי</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Arial,Helvetica,sans-serif;font-size:19px;background:#f6f3ee;color:#222;direction:rtl}
+  .wrap{max-width:560px;margin:0 auto;padding:16px 14px 90px}
+  h1{font-size:26px;margin:8px 0 6px;text-align:center}
+  h2{font-size:22px;margin:6px 0 12px}
+  p{line-height:1.5;margin:6px 0}
+  .muted{color:#666;font-size:16px}
+  .screen{display:none}.screen.on{display:block}
+  .btn{display:block;width:100%;padding:16px;font-size:21px;border:0;border-radius:12px;background:#2c6e49;color:#fff;cursor:pointer;margin-top:12px}
+  .btn.sec{background:#fff;color:#2c6e49;border:2px solid #2c6e49}
+  .btn.small{width:auto;display:inline-block;padding:10px 16px;font-size:17px;margin:6px 4px 0 0}
+  .btn:disabled{opacity:.5}
+  label{display:block;font-weight:bold;margin:12px 0 4px}
+  input[type=text],input[type=tel],input[type=number],input[type=date]{width:100%;padding:13px;font-size:20px;border:2px solid #cfc8bd;border-radius:10px;background:#fff}
+  input:focus{outline:none;border-color:#2c6e49}
+  .card{background:#fff;border:2px solid #e2dbd0;border-radius:14px;padding:14px;margin:14px 0;position:relative}
+  .card .num{position:absolute;top:-12px;right:14px;background:#2c6e49;color:#fff;border-radius:20px;padding:2px 12px;font-size:15px}
+  .card .del{position:absolute;top:8px;left:10px;background:none;border:0;color:#b33;font-size:16px;cursor:pointer}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+  .chip{padding:9px 13px;border:2px solid #cfc8bd;border-radius:22px;background:#fff;font-size:17px;cursor:pointer}
+  .chip.on{background:#2c6e49;color:#fff;border-color:#2c6e49}
+  .grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:8px}
+  .grid button{padding:7px 2px;border:2px solid #cfc8bd;border-radius:9px;background:#fff;font-size:15px;line-height:1.2;cursor:pointer}
+  .grid button.on{background:#2c6e49;color:#fff;border-color:#2c6e49}
+  .grid button small{display:block;color:#888;font-size:12px}
+  .grid button.on small{color:#dfe}
+  .datebox{border:2px dashed #cfc8bd;border-radius:10px;padding:10px;margin-top:6px;background:#fbfaf7}
+  .chosen{font-weight:bold;color:#2c6e49;font-size:20px;margin-top:8px;min-height:26px}
+  .err{color:#b33;font-size:16px;margin-top:4px}
+  .alt{font-size:16px;color:#2c6e49;text-decoration:underline;cursor:pointer;display:inline-block;margin-top:10px}
+  .altbox{display:none;margin-top:8px}.altbox.on{display:block}
+  .summary li{margin:6px 0;font-size:19px}
+  .fixed{position:fixed;bottom:0;left:0;right:0;background:#f6f3ee;padding:8px 14px 12px;border-top:1px solid #ddd}
+  .fixed .btn{max-width:560px;margin:0 auto}
+  .notice{background:#fff6d6;border:1px solid #e8d48a;border-radius:10px;padding:10px;margin:10px 0;font-size:17px}
+  .ok{font-size:70px;text-align:center;color:#2c6e49}
+  .spinner{text-align:center;padding:30px;font-size:20px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- מסך פתיחה -->
+<div class="screen on" id="s-welcome">
+  <h1>הלוח המשפחתי של סבתא</h1>
+  <p style="text-align:center">כאן ממלאים את התאריכים של כל בני המשפחה.<br>לוקח כ‑2 דקות. אפשר לחזור ולתקן בכל זמן.</p>
+  <button class="btn" onclick="go('s-family')">מתחילים</button>
+</div>
+
+<!-- זיהוי משפחה -->
+<div class="screen" id="s-family">
+  <h2>מי אתם?</h2>
+  <label>שם המשפחה</label>
+  <input type="text" id="family" placeholder="למשל: כהן" autocomplete="off">
+  <label>שמות ההורים <span class="muted">(כדי להבדיל בין משפחות עם אותו שם)</span></label>
+  <input type="text" id="parents" placeholder="למשל: דוד ורחל" autocomplete="off">
+  <label>טלפון <span class="muted">(לא חובה, למקרה של שאלה)</span></label>
+  <input type="tel" id="phone" placeholder="050-0000000">
+  <div class="err" id="famErr"></div>
+  <button class="btn" onclick="checkFamily()">המשך</button>
+  <button class="btn sec" onclick="go('s-welcome')">חזרה</button>
+</div>
+
+<!-- בני המשפחה -->
+<div class="screen" id="s-people">
+  <h2>בני המשפחה</h2>
+  <div class="notice" id="existingNote" style="display:none"></div>
+  <p class="muted">לכל אחד: שם ותאריך עברי. אפשר להוסיף גם יום נישואין או יארצייט.</p>
+  <div id="cards"></div>
+  <button class="btn sec" onclick="addCard()">+ הוסף בן משפחה / אירוע</button>
+  <div class="err" id="peopleErr"></div>
+  <div class="fixed"><button class="btn" onclick="review()">סיימנו, לבדיקה אחרונה</button></div>
+</div>
+
+<!-- סיכום -->
+<div class="screen" id="s-review">
+  <h2>בדיקה אחרונה</h2>
+  <p id="revFamily"></p>
+  <ul class="summary" id="revList"></ul>
+  <button class="btn" id="sendBtn" onclick="send()">הכל נכון, שלח</button>
+  <button class="btn sec" onclick="go('s-people')">לתקן</button>
+</div>
+
+<!-- שליחה -->
+<div class="screen" id="s-sending"><div class="spinner">שולח... רגע אחד</div></div>
+
+<!-- הצלחה -->
+<div class="screen" id="s-done">
+  <div class="ok">✔</div>
+  <h2 style="text-align:center">נשמר, תודה!</h2>
+  <p style="text-align:center" id="doneText"></p>
+  <p class="muted" style="text-align:center">רוצים לשנות משהו? פשוט חוזרים לאותו קישור, כותבים שוב את שם המשפחה, והכל מופיע לעריכה.</p>
+  <button class="btn sec" onclick="location.reload()">סגירה</button>
+</div>
+
+</div>
+
+<script>
+<?!= hebcalJs ?>
+
+// ----- מצב -----
+var MONTHS = ['תשרי','חשון','כסליו','טבת','שבט','אדר','אדר א','אדר ב','ניסן','אייר','סיון','תמוז','אב','אלול'];
+var TYPES = ['יום הולדת','יום נישואין','יארצייט','אחר'];
+var state = {family:'',parents:'',phone:'',people:[]};
+var DRAFT_KEY = 'luach_draft';
+
+function go(id){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('on')});
+  document.getElementById(id).classList.add('on');
+  window.scrollTo(0,0);
+}
+function saveDraft(){ try{ localStorage.setItem(DRAFT_KEY, JSON.stringify(state)); }catch(e){} }
+function loadDraft(){ try{ var d=JSON.parse(localStorage.getItem(DRAFT_KEY)||'null'); if(d&&d.family){ state=d; return true;} }catch(e){} return false; }
+function clearDraft(){ try{ localStorage.removeItem(DRAFT_KEY); }catch(e){} }
+
+// ----- זיהוי משפחה -----
+function checkFamily(){
+  var f=document.getElementById('family').value.trim(), p=document.getElementById('parents').value.trim();
+  var err=document.getElementById('famErr'); err.textContent='';
+  if(!f){ err.textContent='נא לכתוב את שם המשפחה'; return; }
+  if(!p){ err.textContent='נא לכתוב את שמות ההורים'; return; }
+  state.family=f; state.parents=p; state.phone=document.getElementById('phone').value.trim();
+  var note=document.getElementById('existingNote'); note.style.display='none';
+  // אם יש טיוטה לא שלוחה של אותה משפחה, ממשיכים ממנה
+  var hasDraftPeople = state.people && state.people.length;
+  document.getElementById('famErr').textContent='בודק...';
+  google.script.run.withSuccessHandler(function(res){
+    document.getElementById('famErr').textContent='';
+    if(res.found && !hasDraftPeople){
+      state.people = res.people.map(function(x){ return {name:x.name,type:x.type,month:x.month,day:Number(x.day),hebYear:x.hebYear,greg:x.greg,note:x.note}; });
+      if(res.phone && !state.phone){ state.phone=res.phone; document.getElementById('phone').value=res.phone; }
+      note.textContent='משפחת '+state.family+' כבר מילאה בעבר. הפרטים מופיעים כאן, אפשר לתקן ולשלוח שוב.';
+      note.style.display='block';
+    } else if(hasDraftPeople){
+      note.textContent='נמצאה טיוטה שלא נשלחה. ממשיכים מאותו מקום.'; note.style.display='block';
+    }
+    if(!state.people.length) addCard(true);
+    renderCards(); go('s-people');
+  }).withFailureHandler(function(e){ document.getElementById('famErr').textContent='שגיאה: '+e.message; })
+  .loadFamily(f,p);
+}
+
+// ----- כרטיסים -----
+function addCard(silent){
+  state.people.push({name:'',type:'יום הולדת',month:'',day:0,hebYear:'',greg:'',note:'',altOpen:false});
+  if(!silent){ renderCards(); var c=document.querySelectorAll('.card'); var last=c[c.length-1]; last.scrollIntoView({behavior:'smooth'}); last.querySelector('input').focus(); }
+  saveDraft();
+}
+function delCard(i){
+  var p=state.people[i];
+  if((p.name||p.month) && !confirm('למחוק את '+(p.name||'הכרטיס')+'?')) return;
+  state.people.splice(i,1); if(!state.people.length) addCard(true); renderCards(); saveDraft();
+}
+function set(i,k,v){ state.people[i][k]=v; saveDraft(); }
+
+function renderCards(){
+  var box=document.getElementById('cards'); box.innerHTML='';
+  state.people.forEach(function(p,i){
+    var d=document.createElement('div'); d.className='card';
+    var isBirthday = p.type==='יום הולדת';
+    var nameLabel = p.type==='יום נישואין'?'של מי? (למשל: דוד ורחל)': p.type==='יארצייט'?'שם הנפטר/ת': p.type==='אחר'?'מה לכתוב בלוח?':'שם פרטי';
+    d.innerHTML =
+      '<span class="num">'+(i+1)+'</span>'+
+      '<button class="del" onclick="delCard('+i+')">מחיקה ✕</button>'+
+      '<div class="chips">'+TYPES.map(function(t){return '<span class="chip'+(p.type===t?' on':'')+'" onclick="set('+i+',\'type\',\''+t+'\');renderCards()">'+t+'</span>';}).join('')+'</div>'+
+      '<label>'+nameLabel+'</label>'+
+      '<input type="text" value="'+esc(p.name)+'" oninput="set('+i+',\'name\',this.value)" placeholder="'+(isBirthday?'למשל: משה':'')+'">'+
+      '<label>תאריך עברי</label>'+
+      '<div class="datebox">'+
+        '<div class="muted">חודש:</div>'+
+        '<div class="chips">'+MONTHS.map(function(m){return '<span class="chip'+(p.month===m?' on':'')+'" onclick="pickMonth('+i+',\''+m+'\')">'+m+'</span>';}).join('')+'</div>'+
+        (p.month?'<div class="muted" style="margin-top:8px">יום:</div><div class="grid">'+dayButtons(i,p)+'</div>':'')+
+        '<div class="chosen">'+(p.month&&p.day?hebDayLetter(p.day)+' '+p.month:'')+'</div>'+
+        '<span class="alt" onclick="set('+i+',\'altOpen\','+(!p.altOpen)+');renderCards()">יודעים רק תאריך לועזי? לחצו כאן</span>'+
+        '<div class="altbox'+(p.altOpen?' on':'')+'">'+
+          '<input type="date" id="g'+i+'" value="'+esc(p.greg)+'">'+
+          '<div class="chips" style="margin-top:8px"><span class="chip" onclick="convert('+i+',0)">נולד ביום (לפני שקיעה)</span><span class="chip" onclick="convert('+i+',1)">נולד בלילה (אחרי שקיעה)</span></div>'+
+        '</div>'+
+      '</div>'+
+      (isBirthday?'<label>שנת לידה עברית <span class="muted">(לא חובה)</span></label><input type="number" inputmode="numeric" value="'+esc(p.hebYear)+'" oninput="set('+i+',\'hebYear\',this.value)" placeholder="למשל: 5745">':'');
+    box.appendChild(d);
+  });
+}
+function dayButtons(i,p){
+  var s=''; for(var d=1; d<=30; d++){ if(d===30 && ['טבת','אדר ב','אייר','תמוז','אלול'].indexOf(p.month)>=0) break;
+    s+='<button class="'+(p.day===d?'on':'')+'" onclick="set('+i+',\'day\','+d+');renderCards()">'+hebDayLetter(d)+'<small>'+d+'</small></button>'; }
+  return s;
+}
+function pickMonth(i,m){ set(i,'month',m); var len=(['טבת','אדר ב','אייר','תמוז','אלול'].indexOf(m)>=0)?29:30; if(state.people[i].day>len) set(i,'day',0); renderCards(); }
+function convert(i,night){
+  var v=document.getElementById('g'+i).value; if(!v){ alert('נא לבחור תאריך'); return; }
+  var a=v.split('-'); var f=gregToFixed(+a[0],+a[1],+a[2]) + (night?1:0);
+  var h=hebFromFixed(f);
+  var p=state.people[i]; p.greg=v; p.month=hebMonthName(h.month,h.year); p.day=h.day; if(p.type==='יום הולדת') p.hebYear=h.year;
+  p.altOpen=false; saveDraft(); renderCards();
+  alert('התאריך העברי: '+hebDayLetter(h.day)+' '+p.month+' '+hebYearName(h.year)+'\nאם זה לא נכון, אפשר לתקן בלחיצה על חודש ויום.');
+}
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+// ----- סיכום ושליחה -----
+function review(){
+  var err=document.getElementById('peopleErr'); err.textContent='';
+  var valid=state.people.filter(function(p){return p.name.trim()||p.month||p.day;});
+  if(!valid.length){ err.textContent='נא להוסיף לפחות אדם אחד'; return; }
+  for(var i=0;i<state.people.length;i++){ var p=state.people[i];
+    if(!p.name.trim()&&!p.month&&!p.day) continue;
+    if(!p.name.trim()){ err.textContent='בכרטיס '+(i+1)+' חסר שם'; return; }
+    if(!p.month||!p.day){ err.textContent='בכרטיס '+(i+1)+' ('+p.name+') חסר תאריך'; return; }
+    if(p.hebYear && (p.hebYear<5600||p.hebYear>5900)){ err.textContent='בכרטיס '+(i+1)+' שנת הלידה לא נראית נכונה (צריך מספר כמו 5745)'; return; }
+  }
+  state.people=valid;
+  document.getElementById('revFamily').innerHTML='<b>משפחת '+esc(state.family)+'</b> ('+esc(state.parents)+')';
+  document.getElementById('revList').innerHTML=state.people.map(function(p){
+    return '<li>'+esc(p.type==='אחר'?p.name:p.type+' '+p.name)+' — <b>'+hebDayLetter(p.day)+' '+p.month+'</b>'+(p.hebYear?' '+hebYearName(+p.hebYear):'')+'</li>';
+  }).join('');
+  go('s-review');
+}
+function send(){
+  go('s-sending');
+  var payload={family:state.family,parents:state.parents,phone:state.phone,people:state.people.map(function(p){return {name:p.name,type:p.type,month:p.month,day:p.day,hebYear:p.hebYear,greg:p.greg,note:p.note};})};
+  google.script.run.withSuccessHandler(function(r){
+    clearDraft();
+    document.getElementById('doneText').textContent='נשמרו '+r.count+' תאריכים של משפחת '+state.family+'.';
+    go('s-done');
+  }).withFailureHandler(function(e){ alert('השליחה נכשלה: '+e.message+'\nנסו שוב.'); go('s-review'); })
+  .saveFamily(payload);
+}
+
+// ----- התחלה -----
+if(loadDraft()){
+  document.getElementById('family').value=state.family;
+  document.getElementById('parents').value=state.parents;
+  document.getElementById('phone').value=state.phone||'';
+}
+</script>
+</body>
+</html>
